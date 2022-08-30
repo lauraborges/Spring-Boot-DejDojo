@@ -2,6 +2,7 @@ package academy.devdojo.springboot2.integration;
 
 import academy.devdojo.springboot2.domain.Anime;
 import academy.devdojo.springboot2.repository.AnimeRepository;
+import academy.devdojo.springboot2.repository.DevDojoUserRepository;
 import academy.devdojo.springboot2.requests.AnimePostRequestBody;
 import academy.devdojo.springboot2.util.AnimeCreator;
 import academy.devdojo.springboot2.util.AnimePostRequestBodyCreator;
@@ -10,10 +11,17 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -28,17 +36,28 @@ import java.util.List;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class AnimeControllerIT {
     @Autowired
+    @Qualifier(value = "testRestTemplateRoleUser")
     private TestRestTemplate testRestTemplate;
-    @LocalServerPort
-    private int port;
     @Autowired
     private AnimeRepository animeRepository;
+    @Autowired
+    private DevDojoUserRepository devDojoUserRepository;
 
+    @TestConfiguration
+    @Lazy
+    static class Config {
+        @Bean(name = "testRestTemplateRoleUser")
+        public TestRestTemplate testRestTemplateRoleUserCreator(@Value("${local.server.port}") int port) {
+            RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder()
+                    .rootUri("http://localhost:"+port)
+                    .basicAuthentication("devdojo", "academy");
+            return new TestRestTemplate(restTemplateBuilder);
+        }
+    }
 
     @Test
-    @DisplayName("List rertuns list of animes inside page object when successful")
+    @DisplayName("List returns list of animes inside page object when successful")
     void list_ReturnsListOfAnimesInsidePageObject_WhenSuccessful() {
-
         Anime savedAnime = animeRepository.save(AnimeCreator.createAnimeToBeSaved());
 
         String expectedName = savedAnime.getName();
@@ -57,7 +76,7 @@ public class AnimeControllerIT {
     }
 
     @Test
-    @DisplayName("ListAll rertuns list of animes when successful")
+    @DisplayName("ListAll returns list of animes when successful")
     void listAll_ReturnsListOfAnimes_WhenSuccessful() {
         Anime savedAnime = animeRepository.save(AnimeCreator.createAnimeToBeSaved());
 
