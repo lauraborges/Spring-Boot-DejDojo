@@ -77,7 +77,7 @@ class AnimeControllerTest {
     void listAll_ReturnsListOfAnimes_WhenSuccessful(){
         String expectedName = AnimeCreator.createValidAnime().getName();
 
-        List<Anime> animes = animeController.listall().getBody();
+        List<Anime> animes = animeController.listAll().getBody();
 
         Assertions.assertThat(animes)
                 .isNotNull()
